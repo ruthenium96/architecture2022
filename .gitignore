@@ -1,3 +1,6 @@
+# Crutch to specify certain version of clang to build
+./toolchain/clang_include_directories.bzl
+
 ### binaries
 # *
 # !/**/

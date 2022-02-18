@@ -1,4 +1,5 @@
 load("@bazel_tools//tools/cpp:cc_toolchain_config_lib.bzl", "tool_path")
+load("clang_include_directories.bzl", "clang_include_directories")
 
 def _impl(ctx):
     tool_paths = [
@@ -38,8 +39,7 @@ def _impl(ctx):
     
     return cc_common.create_cc_toolchain_config_info(
         ctx = ctx,
-        cxx_builtin_include_directories = [
-            "/usr/lib/llvm-11/lib/clang/11.1.0/include",
+        cxx_builtin_include_directories = clang_include_directories + [
             "/usr/include",
         ],
         toolchain_identifier = "local",
