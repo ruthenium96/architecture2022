@@ -20,7 +20,7 @@ public:
             vars_[var_name] = var_value;
         }
 
-        std::optional<std::string> get_var(const std::string& var_name) const { 
+        std::string get_var(const std::string& var_name) const { 
             const auto it = vars_.find(var_name);
             
             if (it != vars_.end()) {
