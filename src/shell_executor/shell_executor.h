@@ -1,3 +1,7 @@
+#ifndef SRC_SHELL_EXECUTOR_SHELL_EXECUTOR_H
+#define SRC_SHELL_EXECUTOR_SHELL_EXECUTOR_H
+
+
 #include <iostream>
 #include <map>
 #include <string>
@@ -398,19 +402,5 @@ private:
 
 
 
-// ----------------
-// main: simple test
-// ----------------
 
-
-int main() {
-    StreamsGlobal streams;
-    State state;
-
-    Shell shell(streams, state);
-    shell.execute();
-
-    // return state.get_errno();
-    return 0;
-
-}
+#endif // SRC_SHELL_EXECUTOR_SHELL_EXECUTOR_H
