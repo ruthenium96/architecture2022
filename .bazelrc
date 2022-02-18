@@ -1,4 +1,13 @@
-#build --cxxopt='-std=c++17'
+build --cxxopt="--std=c++20"
+build --cxxopt="-Wall"
+build --cxxopt="-Wextra"
+build --cxxopt="-Wextra-semi"
+build --cxxopt="-Wvla-extension"
+build --cxxopt="-O0"
+build --cxxopt="-g"
+build --cxxopt="-fno-omit-frame-pointer"
+# build --cxxopt="-fsanitize=address"
+# build --cxxopt="-fsanitize=undefined"
 
 
 # Use our custom-configured c++ toolchain.
