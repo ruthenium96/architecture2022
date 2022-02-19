@@ -92,75 +92,6 @@ private:
 
 
 
-// ----------------
-// Cmd classes
-// ----------------
-
-class ArgsHolder {
-public:
-    explicit ArgsHolder(args_t args = {}) : args_{std::move(args)} {}
-
-    const token_t& get_arg(size_t i) const {
-         return args_.at(i); 
-    }
-
-    void add_arg(token_t arg) {
-        args_.push_back(std::move(arg));
-    }
-
-    const args_t& get_all() const { 
-        return args_; 
-    }
-
-private:
-    args_t args_;
-};
-
-
-
-
-class Cmd {
-public:
-
-    Cmd(token_t cmd, args_t args = {})
-        : cmd_{std::move(cmd)}, args_{std::move(args)} 
-    {
-        // do nothing
-    }
-
-    token_t& get_cmd() { return cmd_; }
-    ArgsHolder& get_args() { return args_; }
-
-private:
-    token_t cmd_;
-    ArgsHolder args_;
-};
-
-
-
-class CmdLine {
-public:
-    CmdLine(token_t cmd_line) : cmd_line_(std::move(cmd_line)) {}
-
-    const token_t& get_cmd_line() const { return cmd_line_; }
-
-    void preprocess(const IState& state) {
-        substitute(state);
-     }  
-
-private:
-    void substitute([[maybe_unused]] const IState& state) { }   
-
-private:
-    token_t cmd_line_;
-};
-
-
-
-
-
-
-
 
 // ----------------
 // Exceptions
@@ -188,6 +119,33 @@ struct CmdExitException : public std::exception {
     char const* what() const noexcept override {
         return "Execution finished using exit command!";
     }
+};
+
+
+
+// ----------------
+// ArgsHolder class
+// ----------------
+
+class ArgsHolder {
+public:
+    explicit ArgsHolder(args_t args = {}) : args_{std::move(args)} {}
+
+    const token_t& get_arg(size_t i = 0) const {
+         return args_.at(i); 
+    }
+
+    void add_arg(token_t arg) {
+        args_.push_back(std::move(arg));
+    }
+
+    const args_t& get_all() const { 
+        return args_; 
+    }
+
+    bool empty() const { return args_.empty(); }
+private:
+    args_t args_;
 };
 
 
@@ -237,6 +195,52 @@ public:
 
 
 
+
+// ----------------
+// Cmd classes
+// ----------------
+
+class ICmd {
+public:
+    virtual const token_t& get_cmd() const = 0;
+
+    virtual bool has_args() const = 0;
+    virtual const ArgsHolder& get_args() const = 0;
+    
+    virtual ~ICmd() = default;
+};
+
+
+
+class Cmd : public ICmd {
+public:
+    Cmd(token_t cmd, args_t args)
+        : cmd_{std::move(cmd)}, args_{std::move(args)}
+    {
+    }
+
+    const token_t& get_cmd() const override { return cmd_; }
+
+    bool has_args() const override {return get_args().empty(); }
+    const ArgsHolder& get_args() const override { return args_; }
+
+private:
+    token_t cmd_;
+    ArgsHolder args_;
+};
+
+
+
+class NoArgumentCmd : public Cmd {
+public:    
+    explicit NoArgumentCmd(token_t cmd) : Cmd{cmd, {}} {}
+
+    bool has_args() const override { return false; }
+};
+
+
+
+
 // ----------------
 // Program class
 // ----------------
@@ -244,14 +248,16 @@ public:
 // pimpl
 class Program {
 public:
-    Program(Cmd& cmd) : cmd_(cmd) {
-        if (cmd.get_cmd() == "test") {
+    Program(std::shared_ptr<ICmd> cmd) : cmd_{cmd} {
+        token_t cmd_line = cmd->get_cmd();
+
+        if (cmd_line == "test") {
             executable_ = std::make_unique<TestCmd>();
         }
-        else if (cmd.get_cmd() == "exit") {
+        else if (cmd_line == "exit") {
             executable_ =  std::make_unique<ExitCmd>();
         }
-        else if (cmd.get_cmd() == "echo") {
+        else if (cmd_line == "echo") {
             executable_ =  std::make_unique<EchoCmd>();
         }
         else {
@@ -262,7 +268,7 @@ public:
 
     void run(IStreams& streams, IState& state) {
         try {
-            executable_->execute(cmd_.get_args(), streams, state);
+            executable_->execute(cmd_->get_args(), streams, state);
         } 
         catch (const CmdExitException& e) {
             throw;
@@ -273,7 +279,7 @@ public:
     }
 private:
     std::unique_ptr<IExecutable> executable_{};
-    Cmd cmd_;
+    std::shared_ptr<ICmd> cmd_;
 };
 
 
@@ -285,40 +291,30 @@ private:
 // Parser classes
 // ----------------
 
-// old interface
-// class ICmdParser {
-// public:
-//     virtual bool empty() const = 0;
-//     virtual CmdRaw get_next_cmd() = 0;
-
-//     virtual ~ICmdParser() = default;
-// };
-
-
-
-
-
-class IInitialCmdParser {
+class ICmdParser {
 public:
-    virtual ~IInitialCmdParser() = default;
+    virtual bool empty() const = 0;
+    virtual std::shared_ptr<ICmd> next() = 0;
+
+    virtual ~ICmdParser() = default;
 };
 
+
 // one-line command without pipes and subshells
-class SimpleInitialCmdParser : public IInitialCmdParser {
+class SimpleInitialCmdParser : public ICmdParser {
 public:
-    explicit SimpleInitialCmdParser([[maybe_unused]] const token_t& cmd_line) 
-        : cmd_line_{cmd_line}
+    explicit SimpleInitialCmdParser(token_t cmd_line) 
+        : cmd_line_{std::move(cmd_line)}
     {
         // here will be splitting into pipe commands
     }
 
-    bool empty() const {
-        return empty_;
-    }
+    bool empty() const override {return empty_; }
 
-    CmdLine next() {
+    std::shared_ptr<ICmd> next() override {
         empty_ = true;
-        return {std::move(cmd_line_)};
+        std::shared_ptr<ICmd> cmd = std::make_shared<NoArgumentCmd>(cmd_line_);
+        return cmd;
     }
 
 private:
@@ -327,44 +323,61 @@ private:
 };
 
 
-
-
-class ISecondaryCmdParser {
-public:
-    virtual ~ISecondaryCmdParser() = default;
-};
-
 // single subcommand: one-word cmd and args
-class SimpleSecondaryCmdParser : public ISecondaryCmdParser {
+class SimpleSecondaryCmdParser : public ICmdParser {
 public:
-    SimpleSecondaryCmdParser(const CmdLine& cmd_line) 
-        : cmd_line_{cmd_line}
+    SimpleSecondaryCmdParser(std::shared_ptr<ICmd> cmd) 
+        : cmd_{cmd}
     {
-
     }
 
-    bool empty() const {
-        return empty_;
-    }
+    bool empty() const override {return empty_; }
 
-    Cmd next() {
+    std::shared_ptr<ICmd> next() override {
         token_t executable_token;
         args_t args;
         
-        std::istringstream iss(cmd_line_.get_cmd_line());
+        std::istringstream iss(cmd_->get_cmd());
 
         iss >> executable_token;
+
         std::copy(std::istream_iterator<token_t>(iss),
                   std::istream_iterator<token_t>(),
                   std::back_inserter(args));
         
+        
+        std::shared_ptr<ICmd> new_cmd = std::make_shared<Cmd>(std::move(executable_token), 
+                                                              std::move(args));
         empty_ = true;
-        return Cmd(std::move(executable_token), std::move(args));
+
+        return new_cmd;
     }
 
 private:
     bool empty_{false};
-    CmdLine cmd_line_;
+    std::shared_ptr<ICmd> cmd_;
+};
+
+
+
+// ----------------
+// CommandProcessor class
+// ----------------
+
+// pattern strategy looks nicely here
+class CommandProcessor {
+public:
+    CommandProcessor() = default;
+
+    void process(std::shared_ptr<ICmd> cmd, IState& state) {
+        substitute(cmd, state);
+     }  
+
+private:
+    void substitute([[maybe_unused]] std::shared_ptr<ICmd> cmd, 
+                    [[maybe_unused]] const IState& state) 
+    {
+    }   
 };
 
 
@@ -375,40 +388,30 @@ private:
 
 class Shell {
 public:
-    Shell() = delete;
-    Shell(const Shell&) = delete;
-    Shell(Shell&&) = delete;
-    Shell& operator=(const Shell&) = delete;
-    Shell& operator=(Shell&&) = delete;
-
     Shell(IStreams& streams, IState& state) : streams_{streams}, state_{state} {}
 
-
-
     void execute() {
-        status_ = ShellStatus::RUNNING;
+        this->start();
 
-        while ((status_ == ShellStatus::RUNNING) && streams_.get_in_stream()) {
+        while (is_running() && streams_.get_in_stream()) {
             token_t cmd_line;
 
-
-            // CmdParserStub cmd_parser(cmd_line);
-            // comment two lines below to use test stub
             std::getline(streams_.get_in_stream(), cmd_line);
-            SimpleInitialCmdParser cmd_line_parser(cmd_line);
+            SimpleInitialCmdParser cmd_parser(cmd_line);
 
             StreamsBuffered streams_local;
 
-            while (!cmd_line_parser.empty()) {
-            
+            while (!cmd_parser.empty()) {
                 try {
-                    CmdLine subcommand_line = cmd_line_parser.next(); 
-                    subcommand_line.preprocess(state_);
+                    std::shared_ptr<ICmd> subcommand = cmd_parser.next(); 
 
-                    SimpleSecondaryCmdParser subcommand_line_parser(subcommand_line);
-                    Cmd subcommand = subcommand_line_parser.next();
+                    CommandProcessor processor;
+                    processor.process(subcommand, state_);
+
+                    SimpleSecondaryCmdParser subcommand_parser(subcommand);
+                    std::shared_ptr<ICmd> parsed_subcommand = subcommand_parser.next();
                 
-                    Program program = Program(subcommand);
+                    Program program = Program(parsed_subcommand);
 
                     program.run(streams_local, state_);
                 } 
@@ -424,7 +427,7 @@ public:
                 } 
                 catch (const CmdExitException& e) {
                     streams_local.get_err_stream() << e.what() << std::endl;
-                    status_ = ShellStatus::FINISHED;
+                    this->stop();
                     break;
                 }                
             }
@@ -434,16 +437,20 @@ public:
         }
     }
 
-
-
 private:
-    IStreams& streams_;
-    IState& state_;
-
     enum class ShellStatus {
         IDLE, RUNNING, FINISHED
     };
     ShellStatus status_{ShellStatus::IDLE};
+
+    void start() { status_ = ShellStatus::RUNNING; }
+    void stop() { status_ = ShellStatus::FINISHED; }
+    ShellStatus status() const { return status_; }
+    bool is_running() const {return status_ == ShellStatus::RUNNING; }
+
+private:  
+    IStreams& streams_;
+    IState& state_;
 };
 
 

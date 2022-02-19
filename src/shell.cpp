@@ -89,17 +89,40 @@ int main() {
 
 
     {   
+        std::cout << "Test Cmd: ";
+        bool test_result{true};
+        {
+            std::string executable_token = "test";
+            std::vector<std::string> args = {"arg0", "1", "arg2"};
+
+            std::shared_ptr<ICmd> cmd = std::make_shared<Cmd>(std::move(executable_token), 
+                                                              std::move(args));
+            
+            test_result &= cmd->get_cmd() == "test";
+            test_result &= cmd->get_args().get_all().size() == 3;
+            test_result &= cmd->get_args().get_arg(0) == "arg0";
+            test_result &= cmd->get_args().get_arg(1) == "1";
+            test_result &= cmd->get_args().get_arg(2) == "arg2";
+
+        }        
+        tests_success_global &= test_result;
+        std::cout << (test_result ? "passed" : "failed") << std::endl;
+    }
+
+    {   
         std::cout << "Test SimpleSecondaryCmdParser: ";
         bool test_result{true};
         {
-            CmdLine cmd_line("test arg0 1 arg2");
-            SimpleSecondaryCmdParser parser(cmd_line);
-            auto cmd = parser.next();
+            std::shared_ptr<ICmd> cmd = std::make_shared<NoArgumentCmd>("test arg0 1 arg2");
+            
+            SimpleSecondaryCmdParser parser(cmd);
+            auto subcommand = parser.next();
 
-            test_result &= cmd.get_cmd() == "test";
-            test_result &= cmd.get_args().get_arg(0) == "arg0";
-            test_result &= cmd.get_args().get_arg(1) == "1";
-            test_result &= cmd.get_args().get_arg(2) == "arg2";
+            test_result &= subcommand->get_cmd() == "test";
+            test_result &= subcommand->get_args().get_all().size() == 3;
+            test_result &= subcommand->get_args().get_arg(0) == "arg0";
+            test_result &= subcommand->get_args().get_arg(1) == "1";
+            test_result &= subcommand->get_args().get_arg(2) == "arg2";
 
         }        
         tests_success_global &= test_result;
