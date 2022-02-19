@@ -99,7 +99,7 @@ int main() {
             test_result &= cmd.get_cmd() == "test";
             test_result &= cmd.get_args().get_arg(0) == "arg0";
             test_result &= cmd.get_args().get_arg(1) == "1";
-            test_result &= cmd.get_args().get_arg(2) == "arg2 ";
+            test_result &= cmd.get_args().get_arg(2) == "arg2";
 
         }        
         tests_success_global &= test_result;
