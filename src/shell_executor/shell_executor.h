@@ -117,6 +117,8 @@ private:
 };
 
 
+
+
 class Cmd {
 public:
 
@@ -135,19 +137,23 @@ private:
 };
 
 
-class CmdRaw : public Cmd {
+
+class CmdLine {
 public:
-    CmdRaw(token_t cmd, std::vector<token_t> args = {})
-        : Cmd(std::move(cmd), std::move(args)) 
-    {
+    CmdLine(token_t cmd_line) : cmd_line_(std::move(cmd_line)) {}
 
-    }
+    const token_t& get_cmd_line() const { return cmd_line_; }
 
-    // substitution will be here
-    void preprocess([[maybe_unused]] IState& state) {}
+    void preprocess(const IState& state) {
+        substitute(state);
+     }  
+
+private:
+    void substitute([[maybe_unused]] const IState& state) { }   
+
+private:
+    token_t cmd_line_;
 };
-
-
 
 
 
@@ -240,13 +246,13 @@ class Program {
 public:
     Program(Cmd& cmd) : cmd_(cmd) {
         if (cmd.get_cmd() == "test") {
-            binary_ = std::make_unique<TestCmd>();
+            executable_ = std::make_unique<TestCmd>();
         }
         else if (cmd.get_cmd() == "exit") {
-            binary_ =  std::make_unique<ExitCmd>();
+            executable_ =  std::make_unique<ExitCmd>();
         }
         else if (cmd.get_cmd() == "echo") {
-            binary_ =  std::make_unique<EchoCmd>();
+            executable_ =  std::make_unique<EchoCmd>();
         }
         else {
             throw CmdNotFoundException();
@@ -256,7 +262,7 @@ public:
 
     void run(IStreams& streams, IState& state) {
         try {
-            binary_->execute(cmd_.get_args(), streams, state);
+            executable_->execute(cmd_.get_args(), streams, state);
         } 
         catch (const CmdExitException& e) {
             throw;
@@ -266,30 +272,12 @@ public:
         }
     }
 private:
-    std::unique_ptr<IExecutable> binary_{};
+    std::unique_ptr<IExecutable> executable_{};
     Cmd cmd_;
 };
 
 
 
-
-
-class CmdLine {
-public:
-    CmdLine(token_t cmd_line) : cmd_line_(std::move(cmd_line)) {}
-
-    const token_t& get_cmd_line() const { return cmd_line_; }
-
-    void preprocess(const IState& state) {
-        substitute(state);
-     }  
-
-private:
-    void substitute([[maybe_unused]] const IState& state) { }   
-
-private:
-    token_t cmd_line_;
-};
 
 
 
