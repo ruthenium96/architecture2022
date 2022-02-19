@@ -38,9 +38,6 @@ public:
             std::cout << "Received err: \"" << streams.get_err_buffer() << "\"" << std::endl;
         }
 
-        if (asserts_enabled_) {
-            assert(test_result_);
-        }
 
         tests_success_global &= test_result_;
     }
@@ -104,19 +101,15 @@ int main() {
             test_result &= cmd.get_args().get_arg(1) == "1";
             test_result &= cmd.get_args().get_arg(2) == "arg2 ";
 
-            // assert(cmd.get_cmd() == "test");
-            // assert(cmd.get_args().get_arg(0) == "arg0");
-            // assert(cmd.get_args().get_arg(1) == "1");
-            // assert(cmd.get_args().get_arg(2) == "arg2");
-
-
         }        
         tests_success_global &= test_result;
         std::cout << (test_result ? "passed" : "failed") << std::endl;
     }
 
-    assert(tests_success_global);
 
+    if (!tests_success_global) {
+        return 1;
+    }
     
     // return state.get_errno();
     return 0;
