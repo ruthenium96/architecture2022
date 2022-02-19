@@ -17,23 +17,27 @@ public:
     }
 
     void run() {
-        std::cout << "Test ShellExecutor " << test_count_++ << ": ";
+        std::cout << "\tTest ShellExecutor " << test_count_++ << ": ";
 
         StreamsBuffered streams(test_in_);
         State state;
 
-        Shell shell(streams, state);
-        shell.execute();
+        Shell().execute(streams, state);
 
-        test_result_ = (streams.get_out_buffer() == test_out_) &&
-                       (streams.get_err_buffer() == test_err_);
+        bool test_result_out = streams.get_out_buffer() == test_out_;
+        bool test_result_err = streams.get_err_buffer() == test_err_;
+
+        test_result_ &= test_result_out;
+        test_result_ &= test_result_err;
+        
 
         std::cout << (test_result_ ? "passed" : "failed") << std::endl;
 
-        if (!test_result_) {
+        if (!test_result_out) {
             std::cout << "Expected out: \"" << test_out_ << "\"" << std::endl;
             std::cout << "Received out: \"" << streams.get_out_buffer() << "\"" << std::endl;
-            
+        }
+        if (!test_result_err) {
             std::cout << "Expected err: \"" << test_err_ << "\"" << std::endl;
             std::cout << "Received err: \"" << streams.get_err_buffer() << "\"" << std::endl;
         }
@@ -47,7 +51,7 @@ private:
     std::string test_out_;
     std::string test_err_;
 
-    bool test_result_;
+    bool test_result_{true};
 
     inline static size_t test_count_{1};
     inline static bool asserts_enabled_{false};
@@ -58,38 +62,11 @@ private:
 // main: run shell
 int main() {
     std::cout << "Small C++ team's CLI is started..." << std::endl;
-    // {
-    //     StreamsGlobal streams;
-    //     State state;
-
-    //     Shell shell(streams, state);
-    //     shell.execute();
-    // }
-
-    {
-        ShellTestExecutor("test arg1 2 arg3\nexit",
-                          "TestCmd running with arguments: arg1 2 arg3 \n",
-                          "Execution finished using exit command!\n"
-                          ).run();
-    }
-
-    {
-        ShellTestExecutor("exit",
-                          "",
-                          "Execution finished using exit command!\n"
-                         ).run();
-    }
-
-    {
-        ShellTestExecutor("exit",
-                          "",
-                          "Execution finished using exit command!\n"
-                         ).run();
-    }
 
 
+    std::cout << "Unit tests:" << std::endl;
     {   
-        std::cout << "Test Cmd: ";
+        std::cout << "\tTest Cmd: ";
         bool test_result{true};
         {
             std::string executable_token = "test";
@@ -108,9 +85,8 @@ int main() {
         tests_success_global &= test_result;
         std::cout << (test_result ? "passed" : "failed") << std::endl;
     }
-
     {   
-        std::cout << "Test SimpleSecondaryCmdParser: ";
+        std::cout << "\tTest SimpleSecondaryCmdParser: ";
         bool test_result{true};
         {
             std::shared_ptr<ICmd> cmd = std::make_shared<NoArgumentCmd>("test arg0 1 arg2");
@@ -127,6 +103,40 @@ int main() {
         }        
         tests_success_global &= test_result;
         std::cout << (test_result ? "passed" : "failed") << std::endl;
+    }
+    std::cout << std::endl;
+
+
+    std::cout << "Integration tests:" << std::endl;
+    {
+        ShellTestExecutor("exit",
+                          "",
+                          "Execution finished using exit command!\n"
+                         ).run();
+    }
+    {
+        ShellTestExecutor("test arg1\n",
+                          "TestCmd running with arguments: arg1 \n",
+                          ""
+                         ).run();
+    }
+    {
+        ShellTestExecutor("test arg1 2 arg3\nexit",
+                          "TestCmd running with arguments: arg1 2 arg3 \n",
+                          "Execution finished using exit command!\n"
+                          ).run();
+    }
+    {
+        ShellTestExecutor("echo arg1\nexit",
+                          "arg1\n",
+                          "Execution finished using exit command!\n"
+                         ).run();
+    }
+    {
+        ShellTestExecutor("echo arg1\necho arg1\nexit",
+                          "arg1\narg1\n",
+                          "Execution finished using exit command!\n"
+                         ).run();
     }
 
 
