@@ -93,9 +93,7 @@ private:
 
 class Args {
 public:
-    // Args() = default;
     explicit Args(args_t args = {}) : args_{std::move(args)} {}
-
 
     const token_t& get_arg(size_t i) const {
          return args_.at(i); 
@@ -144,81 +142,6 @@ public:
     void preprocess([[maybe_unused]] State& state) {}
 };
 
-
-
-
-// ----------------
-// CmdParser classes
-// ----------------
-
-class ICmdParser {
-public:
-    virtual bool empty() const = 0;
-    virtual CmdRaw get_next_cmd() = 0;
-
-    virtual ~ICmdParser() = default;
-};
-
-
-// single subcommand: one-word cmd and args
-class CmdParserSimple : public ICmdParser {
-public:
-    explicit CmdParserSimple(token_t& cmd_line) {
-        std::istringstream iss(cmd_line);
-        iss >> cmd_;
-
-        
-        auto in_it = std::istream_iterator<token_t>(iss);
-        
-        std::copy(in_it,
-                  std::istream_iterator<token_t>(),
-                  std::back_inserter(args_));
-    }
-
-    bool empty() const override {
-        return empty_;
-    }
-
-    CmdRaw get_next_cmd() override {
-        empty_ = true;
-        return {cmd_, args_};
-    }
-
-private:
-    bool empty_{false};
-
-    token_t cmd_;
-    std::vector<token_t> args_;
-
-};
-
-
-
-// stub test class
-class CmdParserStub : public ICmdParser {
-private:
-    constexpr static size_t kMaxQueryCount{3};
-    size_t query_count{0}; 
-
-public:
-    explicit CmdParserStub([[maybe_unused]] token_t& cmd_line) {}
-
-    bool empty() const override {
-        return empty_;
-    }
-
-    CmdRaw get_next_cmd() override {
-        if (query_count >= kMaxQueryCount) {
-            return {{"exit"}};
-        }
-
-        ++query_count;
-        return {{"test"}, {"arg1", "arg2_" + std::to_string(query_count)}};
-    }
-
-private:
-    bool empty_{false};
-};
 
 
 
@@ -345,12 +268,18 @@ private:
 
 
 
+
 class CmdLine {
 public:
     CmdLine(token_t cmd_line) : cmd_line_(std::move(cmd_line)) {}
 
     const token_t& get_cmd_line() const { return cmd_line_; }
 
+    void preprocess(const State& state) {
+        substitute(state);
+     }  
+
+private:
     void substitute([[maybe_unused]] const State& state) { }   
 
 private:
@@ -359,29 +288,91 @@ private:
 
 
 
+// ----------------
+// Parser classes
+// ----------------
+
+// old interface
+// class ICmdParser {
+// public:
+//     virtual bool empty() const = 0;
+//     virtual CmdRaw get_next_cmd() = 0;
+
+//     virtual ~ICmdParser() = default;
+// };
+
+
+
+
+
+class IInitialCmdParser {
+public:
+    virtual ~IInitialCmdParser() = default;
+};
+
+// one-line command without pipes and subshells
+class SimpleInitialCmdParser : public IInitialCmdParser {
+public:
+    explicit SimpleInitialCmdParser([[maybe_unused]] const token_t& cmd_line) 
+        : cmd_line_{cmd_line}
+    {
+        // here will be splitting into pipe commands
+    }
+
+    bool empty() const {
+        return empty_;
+    }
+
+    CmdLine next() {
+        empty_ = true;
+        return {std::move(cmd_line_)};
+    }
+
+private:
+    bool empty_{false};
+    token_t cmd_line_;
+};
+
+
+
+
 class ISecondaryCmdParser {
 public:
-     
     virtual ~ISecondaryCmdParser() = default;
 };
 
+// single subcommand: one-word cmd and args
 class SimpleSecondaryCmdParser : public ISecondaryCmdParser {
 public:
-    Cmd get_subcommand(CmdLine cmd_line) {
+    SimpleSecondaryCmdParser(const CmdLine& cmd_line) 
+        : cmd_line_{cmd_line}
+    {
+
+    }
+
+    bool empty() const {
+        return empty_;
+    }
+
+    Cmd next() {
         token_t executable_token;
         args_t args;
         
-        std::istringstream iss(cmd_line.get_cmd_line());
+        std::istringstream iss(cmd_line_.get_cmd_line());
 
         iss >> executable_token;
         std::copy(std::istream_iterator<token_t>(iss),
                   std::istream_iterator<token_t>(),
                   std::back_inserter(args));
         
+        empty_ = true;
         return Cmd(std::move(executable_token), std::move(args));
     }
-};
 
+private:
+    bool empty_{false};
+    CmdLine cmd_line_;
+};
 
 
 
@@ -411,20 +402,22 @@ public:
             // CmdParserStub cmd_parser(cmd_line);
             // comment two lines below to use test stub
             std::getline(streams_.get_in_stream(), cmd_line);
-            CmdParserSimple cmd_parser(cmd_line);
-
+            SimpleInitialCmdParser cmd_line_parser(cmd_line);
 
             StreamsBuffered streams_local;
 
-            while (!cmd_parser.empty()) {
+            while (!cmd_line_parser.empty()) {
             
                 try {
-                    CmdRaw current_subcommand = cmd_parser.get_next_cmd(); 
-                    current_subcommand.preprocess(state_);
-                
-                    Program current_program = Program(current_subcommand);
+                    CmdLine subcommand_line = cmd_line_parser.next(); 
+                    subcommand_line.preprocess(state_);
 
-                    current_program.run(streams_local, state_);
+                    SimpleSecondaryCmdParser subcommand_line_parser(subcommand_line);
+                    Cmd subcommand = subcommand_line_parser.next();
+                
+                    Program program = Program(subcommand);
+
+                    program.run(streams_local, state_);
                 } 
                 catch (const SubcommandParseException& e) {
                     streams_local.get_err_stream() << e.what() << std::endl;
@@ -447,6 +440,7 @@ public:
             streams_.get_err_stream() << streams_local.get_err_buffer();
         }
     }
+
 
 
 private:

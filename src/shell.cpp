@@ -3,11 +3,11 @@
 #include <cassert>
 #include <string>
 
-class ShellTestRunner {
+class ShellTestExecutor {
 public:
-    ShellTestRunner(const std::string& test_in, 
-                    const std::string& test_out, 
-                    const std::string& test_err = "")
+    ShellTestExecutor(const std::string& test_in, 
+                      const std::string& test_out, 
+                      const std::string& test_err = "")
         : test_in_{test_in},
           test_out_{test_out},
           test_err_{test_err}
@@ -15,7 +15,7 @@ public:
     }
 
     void run() {
-        std::cout << "Test " << test_count_++ << ": ";
+        std::cout << "Test ShellExecutor " << test_count_++ << ": ";
 
         StreamsBuffered streams(test_in_);
         State state;
@@ -66,38 +66,40 @@ int main() {
     // }
 
     {
-        ShellTestRunner("test arg1 2 arg3\nexit",
-                        "TestCmd running with arguments: arg1 2 arg3 \n",
-                        "Execution finished using exit command!\n"
-                        ).run();
+        ShellTestExecutor("test arg1 2 arg3\nexit",
+                          "TestCmd running with arguments: arg1 2 arg3 \n",
+                          "Execution finished using exit command!\n"
+                          ).run();
     }
 
     {
-        ShellTestRunner("exit",
-                        "",
-                        "Execution finished using exit command!\n"
-                       ).run();
+        ShellTestExecutor("exit",
+                          "",
+                          "Execution finished using exit command!\n"
+                         ).run();
     }
 
     {
-        ShellTestRunner("exit",
-                        "",
-                        "Execution finished using exit command!\n"
-                       ).run();
+        ShellTestExecutor("exit",
+                          "",
+                          "Execution finished using exit command!\n"
+                         ).run();
     }
 
 
     {   
-        // SimpleSecondaryCmdParser test
-        CmdLine cmd_line("test arg0 1 arg2");
-        SimpleSecondaryCmdParser parser;
-        auto cmd = parser.get_subcommand(cmd_line);
+        std::cout << "Test SimpleSecondaryCmdParser: ";
+        {
+            CmdLine cmd_line("test arg0 1 arg2");
+            SimpleSecondaryCmdParser parser(cmd_line);
+            auto cmd = parser.next();
 
-        assert(cmd.get_cmd() == "test");
-        assert(cmd.get_args().get_arg(0) == "arg0");
-        assert(cmd.get_args().get_arg(1) == "1");
-        assert(cmd.get_args().get_arg(2) == "arg2");
-        
+            assert(cmd.get_cmd() == "test");
+            assert(cmd.get_args().get_arg(0) == "arg0");
+            assert(cmd.get_args().get_arg(1) == "1");
+            assert(cmd.get_args().get_arg(2) == "arg2");
+        }        
+        std::cout << "passed" << std::endl;
     }
 
     // return state.get_errno();
