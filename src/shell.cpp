@@ -87,6 +87,18 @@ int main() {
     }
 
 
+    {   
+        // SimpleSecondaryCmdParser test
+        CmdLine cmd_line("test arg0 1 arg2");
+        SimpleSecondaryCmdParser parser;
+        auto cmd = parser.get_subcommand(cmd_line);
+
+        assert(cmd.get_cmd() == "test");
+        assert(cmd.get_args().get_arg(0) == "arg0");
+        assert(cmd.get_args().get_arg(1) == "1");
+        assert(cmd.get_args().get_arg(2) == "arg2");
+        
+    }
 
     // return state.get_errno();
     return 0;

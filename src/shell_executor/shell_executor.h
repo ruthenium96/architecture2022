@@ -12,6 +12,9 @@
 #include <iterator>
 
 
+using token_t = std::string;
+using args_t = std::vector<token_t>;
+
 
 // ----------------
 // State class
@@ -20,11 +23,11 @@
 class State {
 public:
     class Env {
-        void set_var(const std::string& var_name, const std::string& var_value) {
+        void set_var(const token_t& var_name, const token_t& var_value) {
             vars_[var_name] = var_value;
         }
 
-        std::string get_var(const std::string& var_name) const { 
+        token_t get_var(const token_t& var_name) const { 
             const auto it = vars_.find(var_name);
             
             if (it != vars_.end()) {
@@ -36,7 +39,7 @@ public:
         }
 
     private:
-        std::map<std::string, std::string> vars_;
+        std::map<token_t, token_t> vars_;
     };
 
 };
@@ -90,51 +93,48 @@ private:
 
 class Args {
 public:
-    using ArgType = std::string;
-
-    Args() = default;
-    explicit Args(ArgType arg) : args_{std::move(arg)} {}
-    explicit Args(std::vector<ArgType> args) : args_{std::move(args)} {}
+    // Args() = default;
+    explicit Args(args_t args = {}) : args_{std::move(args)} {}
 
 
-    const ArgType& get_arg(size_t i) const {
+    const token_t& get_arg(size_t i) const {
          return args_.at(i); 
     }
 
-    void add_arg(ArgType arg) {
+    void add_arg(token_t arg) {
         args_.push_back(std::move(arg));
     }
 
-    const std::vector<ArgType>& get_all() const { 
+    const args_t& get_all() const { 
         return args_; 
     }
 
 private:
-    std::vector<ArgType> args_;
+    args_t args_;
 };
 
 
 class Cmd {
 public:
 
-    Cmd(std::string cmd, std::vector<std::string> args = {})
+    Cmd(token_t cmd, args_t args = {})
         : cmd_{std::move(cmd)}, args_{std::move(args)} 
     {
         // do nothing
     }
 
-    std::string& get_cmd() { return cmd_; }
+    token_t& get_cmd() { return cmd_; }
     Args& get_args() { return args_; }
 
 private:
-    std::string cmd_;
+    token_t cmd_;
     Args args_;
 };
 
 
 class CmdRaw : public Cmd {
 public:
-    CmdRaw(std::string cmd, std::vector<std::string> args = {})
+    CmdRaw(token_t cmd, std::vector<token_t> args = {})
         : Cmd(std::move(cmd), std::move(args)) 
     {
 
@@ -163,15 +163,15 @@ public:
 // single subcommand: one-word cmd and args
 class CmdParserSimple : public ICmdParser {
 public:
-    explicit CmdParserSimple(std::string& cmd_line) {
+    explicit CmdParserSimple(token_t& cmd_line) {
         std::istringstream iss(cmd_line);
         iss >> cmd_;
 
         
-        auto in_it = std::istream_iterator<std::string>(iss);
+        auto in_it = std::istream_iterator<token_t>(iss);
         
         std::copy(in_it,
-                  std::istream_iterator<std::string>(),
+                  std::istream_iterator<token_t>(),
                   std::back_inserter(args_));
     }
 
@@ -187,12 +187,10 @@ public:
 private:
     bool empty_{false};
 
-    std::string cmd_;
-    std::vector<std::string> args_;
+    token_t cmd_;
+    std::vector<token_t> args_;
 
 };
-
-
 
 
 
@@ -203,7 +201,7 @@ private:
     size_t query_count{0}; 
 
 public:
-    explicit CmdParserStub([[maybe_unused]] std::string& cmd_line) {}
+    explicit CmdParserStub([[maybe_unused]] token_t& cmd_line) {}
 
     bool empty() const override {
         return empty_;
@@ -221,6 +219,12 @@ public:
 private:
     bool empty_{false};
 };
+
+
+
+
+
+
 
 
 
@@ -340,6 +344,47 @@ private:
 
 
 
+
+class CmdLine {
+public:
+    CmdLine(token_t cmd_line) : cmd_line_(std::move(cmd_line)) {}
+
+    const token_t& get_cmd_line() const { return cmd_line_; }
+
+    void substitute([[maybe_unused]] const State& state) { }   
+
+private:
+    token_t cmd_line_;
+};
+
+
+
+class ISecondaryCmdParser {
+public:
+     
+    virtual ~ISecondaryCmdParser() = default;
+};
+
+class SimpleSecondaryCmdParser : public ISecondaryCmdParser {
+public:
+    Cmd get_subcommand(CmdLine cmd_line) {
+        token_t executable_token;
+        args_t args;
+        
+        std::istringstream iss(cmd_line.get_cmd_line());
+
+        iss >> executable_token;
+        std::copy(std::istream_iterator<token_t>(iss),
+                  std::istream_iterator<token_t>(),
+                  std::back_inserter(args));
+        
+        return Cmd(std::move(executable_token), std::move(args));
+    }
+};
+
+
+
+
 // ----------------
 // Our CLI shell class
 // ----------------
@@ -360,7 +405,7 @@ public:
         status_ = ShellStatus::RUNNING;
 
         while ((status_ == ShellStatus::RUNNING) && streams_.get_in_stream()) {
-            std::string cmd_line;
+            token_t cmd_line;
 
 
             // CmdParserStub cmd_parser(cmd_line);
