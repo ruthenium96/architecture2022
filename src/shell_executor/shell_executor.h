@@ -20,7 +20,12 @@ using args_t = std::vector<token_t>;
 // State class
 // ----------------
 
-class State {
+class IState {
+public:
+    virtual ~IState() = default;
+};
+
+class State : public IState{
 public:
     class Env {
         void set_var(const token_t& var_name, const token_t& var_value) {
@@ -91,9 +96,9 @@ private:
 // Cmd classes
 // ----------------
 
-class Args {
+class ArgsHolder {
 public:
-    explicit Args(args_t args = {}) : args_{std::move(args)} {}
+    explicit ArgsHolder(args_t args = {}) : args_{std::move(args)} {}
 
     const token_t& get_arg(size_t i) const {
          return args_.at(i); 
@@ -122,11 +127,11 @@ public:
     }
 
     token_t& get_cmd() { return cmd_; }
-    Args& get_args() { return args_; }
+    ArgsHolder& get_args() { return args_; }
 
 private:
     token_t cmd_;
-    Args args_;
+    ArgsHolder args_;
 };
 
 
@@ -139,7 +144,7 @@ public:
     }
 
     // substitution will be here
-    void preprocess([[maybe_unused]] State& state) {}
+    void preprocess([[maybe_unused]] IState& state) {}
 };
 
 
@@ -188,14 +193,14 @@ struct CmdExitException : public std::exception {
 // REDO: singleton
 class IExecutable {
 public:
-    virtual void execute(Args& args, IStreams& streams, State& state) = 0;
+    virtual void execute(const ArgsHolder& args, IStreams& streams, IState& state) = 0;
     virtual ~IExecutable() = default;
 };
 
 // test
 class TestCmd : public IExecutable {
 public:
-    void execute(Args& args, IStreams& streams, [[maybe_unused]] State& state) {
+    void execute(const ArgsHolder& args, IStreams& streams, [[maybe_unused]] IState& state) {
         auto& cout_ = streams.get_out_stream();
         cout_ << "TestCmd running with arguments: ";
         for (const auto& arg : args.get_all()) {
@@ -209,7 +214,7 @@ public:
 // echo
 class EchoCmd : public IExecutable {
 public:
-    void execute(Args& args, IStreams& streams, [[maybe_unused]] State& state) {
+    void execute(const ArgsHolder& args, IStreams& streams, [[maybe_unused]] IState& state) {
         streams.get_out_stream() << args.get_arg(0) << std::endl;
     }
 };
@@ -218,7 +223,7 @@ public:
 // exit
 class ExitCmd : public IExecutable {
 public:
-    void execute([[maybe_unused]] Args& args, [[maybe_unused]] IStreams& streams, [[maybe_unused]] State& state) {
+    void execute([[maybe_unused]] const ArgsHolder& args, [[maybe_unused]] IStreams& streams, [[maybe_unused]] IState& state) {
         throw CmdExitException();
     }
 };
@@ -249,7 +254,7 @@ public:
     }
 
 
-    void run(IStreams& streams, State& state) {
+    void run(IStreams& streams, IState& state) {
         try {
             binary_->execute(cmd_.get_args(), streams, state);
         } 
@@ -275,12 +280,12 @@ public:
 
     const token_t& get_cmd_line() const { return cmd_line_; }
 
-    void preprocess(const State& state) {
+    void preprocess(const IState& state) {
         substitute(state);
      }  
 
 private:
-    void substitute([[maybe_unused]] const State& state) { }   
+    void substitute([[maybe_unused]] const IState& state) { }   
 
 private:
     token_t cmd_line_;
@@ -388,7 +393,7 @@ public:
     Shell& operator=(const Shell&) = delete;
     Shell& operator=(Shell&&) = delete;
 
-    Shell(IStreams& streams, State& state) : streams_{streams}, state_{state} {}
+    Shell(IStreams& streams, IState& state) : streams_{streams}, state_{state} {}
 
 
 
@@ -445,7 +450,7 @@ public:
 
 private:
     IStreams& streams_;
-    State& state_;
+    IState& state_;
 
     enum class ShellStatus {
         IDLE, RUNNING, FINISHED
