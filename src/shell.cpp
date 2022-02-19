@@ -3,6 +3,8 @@
 #include <cassert>
 #include <string>
 
+inline bool tests_success_global{true};
+
 class ShellTestExecutor {
 public:
     ShellTestExecutor(const std::string& test_in, 
@@ -39,6 +41,8 @@ public:
         if (asserts_enabled_) {
             assert(test_result_);
         }
+
+        tests_success_global &= test_result_;
     }
     
 private:
@@ -89,19 +93,31 @@ int main() {
 
     {   
         std::cout << "Test SimpleSecondaryCmdParser: ";
+        bool test_result{true};
         {
             CmdLine cmd_line("test arg0 1 arg2");
             SimpleSecondaryCmdParser parser(cmd_line);
             auto cmd = parser.next();
 
-            assert(cmd.get_cmd() == "test");
-            assert(cmd.get_args().get_arg(0) == "arg0");
-            assert(cmd.get_args().get_arg(1) == "1");
-            assert(cmd.get_args().get_arg(2) == "arg2");
+            test_result &= cmd.get_cmd() == "test";
+            test_result &= cmd.get_args().get_arg(0) == "arg0";
+            test_result &= cmd.get_args().get_arg(1) == "1";
+            test_result &= cmd.get_args().get_arg(2) == "arg2 ";
+
+            // assert(cmd.get_cmd() == "test");
+            // assert(cmd.get_args().get_arg(0) == "arg0");
+            // assert(cmd.get_args().get_arg(1) == "1");
+            // assert(cmd.get_args().get_arg(2) == "arg2");
+
+
         }        
-        std::cout << "passed" << std::endl;
+        tests_success_global &= test_result;
+        std::cout << (test_result ? "passed" : "failed") << std::endl;
     }
 
+    assert(tests_success_global);
+
+    
     // return state.get_errno();
     return 0;
 
