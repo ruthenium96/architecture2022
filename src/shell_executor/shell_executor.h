@@ -63,6 +63,25 @@ public:
     std::ostream& get_err_stream() override {return std::cerr; }
 };
 
+class StreamsBuffered : public IStreams {
+public:
+    std::istream& get_in_stream() override {return is_; }
+    std::ostream& get_out_stream() override {return os_; }
+    std::ostream& get_err_stream() override {return es_; }
+
+    explicit StreamsBuffered(std::string input = "") : is_{std::move(input)} {}
+
+    std::string get_out_buffer() {
+        return os_.str();
+    }
+
+private:
+    std::istringstream is_;
+    std::ostringstream os_;
+    std::ostringstream es_;
+};
+
+
 
 
 // ----------------
@@ -357,7 +376,7 @@ public:
             CmdParserSimple cmd_parser(cmd_line);
 
 
-            StreamsGlobal streams_local;
+            StreamsBuffered streams_local;
 
             while (!cmd_parser.empty()) {
             
@@ -377,14 +396,19 @@ public:
                 } 
                 catch (const CmdErrorException& e) {
                     streams_local.get_err_stream() << e.what() << std::endl;
-                    cmd_parser.stop();
+                    // cmd_parser.stop();
+                    break;
                 } 
                 catch (const CmdExitException& e) {
                     streams_local.get_err_stream() << e.what() << std::endl;
-                    cmd_parser.stop();
+                    // cmd_parser.stop();
                     status_ = ShellStatus::FINISHED;
-                }
+                    break;
+                }                
             }
+
+            streams_.get_out_stream() << streams_local.get_out_buffer();
+
         }
     }
 
