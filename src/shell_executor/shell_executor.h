@@ -65,15 +65,15 @@ public:
 
 class StreamsBuffered : public IStreams {
 public:
+    explicit StreamsBuffered(std::string input = "") : is_{std::move(input)} {}
+
     std::istream& get_in_stream() override {return is_; }
     std::ostream& get_out_stream() override {return os_; }
     std::ostream& get_err_stream() override {return es_; }
 
-    explicit StreamsBuffered(std::string input = "") : is_{std::move(input)} {}
-
-    std::string get_out_buffer() {
-        return os_.str();
-    }
+    std::string get_out_buffer() { return os_.str(); }
+    std::string get_err_buffer() { return es_.str(); }
+    
 
 private:
     std::istringstream is_;
@@ -154,7 +154,6 @@ public:
 class ICmdParser {
 public:
     virtual bool empty() const = 0;
-    virtual void stop() = 0;
     virtual CmdRaw get_next_cmd() = 0;
 
     virtual ~ICmdParser() = default;
@@ -180,10 +179,6 @@ public:
         return empty_;
     }
 
-    void stop() override {
-        empty_ = true;
-    }
-
     CmdRaw get_next_cmd() override {
         empty_ = true;
         return {cmd_, args_};
@@ -199,6 +194,8 @@ private:
 
 
 
+
+
 // stub test class
 class CmdParserStub : public ICmdParser {
 private:
@@ -211,10 +208,6 @@ public:
     bool empty() const override {
         return empty_;
     }
-
-
-    void stop() override { empty_ = true; }
-
 
     CmdRaw get_next_cmd() override {
         if (query_count >= kMaxQueryCount) {
@@ -396,19 +389,17 @@ public:
                 } 
                 catch (const CmdErrorException& e) {
                     streams_local.get_err_stream() << e.what() << std::endl;
-                    // cmd_parser.stop();
                     break;
                 } 
                 catch (const CmdExitException& e) {
                     streams_local.get_err_stream() << e.what() << std::endl;
-                    // cmd_parser.stop();
                     status_ = ShellStatus::FINISHED;
                     break;
                 }                
             }
 
             streams_.get_out_stream() << streams_local.get_out_buffer();
-
+            streams_.get_err_stream() << streams_local.get_err_buffer();
         }
     }
 
