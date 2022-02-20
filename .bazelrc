@@ -1,0 +1,21 @@
+build --cxxopt="--std=c++20"
+build --cxxopt="-Wall"
+build --cxxopt="-Wextra"
+build --cxxopt="-Wextra-semi"
+build --cxxopt="-Wvla-extension"
+build --cxxopt="-O0"
+build --cxxopt="-g"
+build --cxxopt="-fno-omit-frame-pointer"
+# build --cxxopt="-fsanitize=address"
+# build --cxxopt="-fsanitize=undefined"
+
+
+# Use our custom-configured c++ toolchain.
+build:clang_config --crosstool_top=//toolchain:clang_suite
+
+# Use --cpu as a differentiator.
+build:clang_config --cpu=k8
+
+# Use the default Bazel C++ toolchain to build the tools used during the
+# build.
+build:clang_config --host_crosstool_top=@bazel_tools//tools/cpp:toolchain

@@ -32,3 +32,8 @@ jobs:
     - name: Build
       run: |
         "${GITHUB_WORKSPACE}/bin/bazel" build --repo_env=CC=clang //src:shell
+
+    - name: Run tests
+      run: |
+        chmod +x shell.sh
+        ./shell.sh run
