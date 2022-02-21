@@ -33,7 +33,10 @@ jobs:
       run: |
         "${GITHUB_WORKSPACE}/bin/bazel" build --repo_env=CC=clang //src:shell
 
-    - name: Run tests
+    - name: Run unit tests
       run: |
-        chmod +x shell.sh
-        ./shell.sh run
+        CC=clang CXX=clang++ "${GITHUB_WORKSPACE}/bin/bazel" test //src/tests:unit_tests --test_output=all
+
+    - name: Run integration tests
+      run: |
+        CC=clang CXX=clang++ "${GITHUB_WORKSPACE}/bin/bazel" test //src/tests:integration_tests --test_output=all
