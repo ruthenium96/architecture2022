@@ -6,7 +6,7 @@ fi
 
 
 if [ $1 == "build" ]; then 
-    bazel build --config=clang_config //src:shell
+    bazel build --repo_env=CC=clang //src:shell
     if [ $? -eq 1 ]; then
         exit 1
     fi
