@@ -62,14 +62,10 @@ std::optional<CommandDescriptor> Parser::parse_command() {
 
     auto command = cmd_manager_.get_command(cmd_name);
 
-    while (true) {
-        token = get_next_token();
-
-        if (token->GetValue().empty() || token->GetValue() == "|") {
-            break;
-        }
-
+    token = get_next_token();
+    while (!token->GetValue().empty() && token->GetValue() != "|") {
         arguments.push_back(token->GetValue());
+        token = get_next_token();
     };
 
     return CommandDescriptor{command, arguments};
