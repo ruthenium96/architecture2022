@@ -5,10 +5,11 @@
 
 namespace shell {
 
-struct SubcommandParseException : public std::exception {
-    char const* what() const noexcept override {
-        return "Failed to parse command!";
-    }
+
+
+class ShellException : public std::runtime_error {
+public:
+    explicit ShellException(const std::string& what) : std::runtime_error("Shell exception: " + std::string{what}) {}
 };
 
 struct ParsingError : public std::exception {
@@ -36,16 +37,5 @@ private:
     std::string error_cmd_line_;
 };
 
-struct CmdErrorException : public std::exception {
-    char const* what() const noexcept override {
-        return "Error was raised during command execution!";
-    }
-};
-
-struct CmdExitException : public std::exception {
-    char const* what() const noexcept override {
-        return "Execution finished using exit command!";
-    }
-};
 
 } // namespace shell

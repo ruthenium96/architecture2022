@@ -1,6 +1,6 @@
 cc_test(
   name = "unit_tests",
-  srcs = ["unit/parser_test.cpp"],
+  srcs = glob(["unit/*_test.cpp"]),
   deps = ["//shell:shell",
           "@googletest//:gtest_main"]
 )

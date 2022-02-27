@@ -20,6 +20,9 @@ public:
     std::string GetValue() const {
         return value_;
     }
+    void SetValue(const std::string& value) {
+        value_ = value;
+    }
     virtual ~IToken() {}
 private:
     std::string value_;
@@ -42,22 +45,23 @@ public:
 using Argument = std::string;
 
 struct CommandDescriptor {
-    std::shared_ptr<ICommand> command;
+    std::shared_ptr<Command> command;
     std::vector<Argument> arguments;
 };
 
 
 class Parser {
 public:
-    explicit Parser(std::string  line) : cmd_manager_(CommandManager::get_instance()), line_(std::move(line)), line_view_(line_) {}
+    explicit Parser(std::string line) : line_(std::move(line)), line_view_(line_) {}
 
-    std::optional<CommandDescriptor> parse_command();
+    std::vector<std::shared_ptr<IToken>> parse_tokens();
 
     std::shared_ptr<IToken> get_next_token();
 private:
-    const CommandManager& cmd_manager_;
+    bool is_pipe(const std::string& token) const;
     std::string line_;
     std::string_view line_view_;
 };
+
 
 } // namespace shell::parser

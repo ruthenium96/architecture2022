@@ -1,7 +1,6 @@
 #include "include/gtest/gtest.h"
 
 #include "shell/src/parser.h"
-#include "shell/src/commands/echo_cmd.h"
 
 #include <memory>
 
@@ -49,12 +48,14 @@ TEST(ParserTests, GetWord) {
    }
 }
 
-TEST(ParserTests, parse_command) {
+TEST(ParserTests, ParseCommand) {
     shell::parser::Parser parser("echo 'some text'");
-    auto descriptor = parser.parse_command();
-    ASSERT_NE(descriptor, std::nullopt);
-    ASSERT_TRUE(std::dynamic_pointer_cast<shell::EchoCommand>(descriptor.value().command) != nullptr);
+    auto tokens = parser.parse_tokens();
+    ASSERT_EQ(tokens.size(), 2);
+    ASSERT_TRUE(std::dynamic_pointer_cast<shell::parser::StringToken>(tokens[0]));
+    ASSERT_EQ(tokens[0]->GetValue(), "echo");
 
-    ASSERT_EQ(descriptor.value().arguments.size(), 1);
-    ASSERT_EQ(descriptor.value().arguments[0], "some text");
+    ASSERT_TRUE(std::dynamic_pointer_cast<shell::parser::RawStringToken>(tokens[1]));
+    ASSERT_EQ(tokens[1]->GetValue(), "some text");
+
 }

@@ -1,7 +1,7 @@
 #include "include/gtest/gtest.h"
 #include "shell/src/shell.h"
+#include "shell/src/state.h"
 
-#include <iostream>
 #include <string>
 
 struct TestParameter {
@@ -15,22 +15,25 @@ class ShellExecutorIntegrationTestsFixture : public ::testing::TestWithParam<Tes
 
 TEST_P(ShellExecutorIntegrationTestsFixture, CommandExecution) {
     TestParameter parameter = GetParam();
-    auto streams = std::make_shared<shell::StreamsBuffered>(parameter.input);
+    auto streams = shell::StreamsBuffered(parameter.input);
 
-    shell::Shell shell_object(streams);
-    shell_object.start();
+    shell::CommandManager::get_instance().initialize_builtin_commands();
 
-    EXPECT_EQ(streams->get_err_buffer(), parameter.error_stream_expected);
-    EXPECT_EQ(streams->get_out_buffer(), parameter.out_stream_expected);
+    shell::Shell shell_object("shell");
+    shell::State shell_state;
+    shell_object.execute({}, shell_state, streams);
+
+    EXPECT_EQ(streams.get_err_buffer(), parameter.error_stream_expected);
+    EXPECT_EQ(streams.get_out_buffer(), parameter.out_stream_expected);
 }
 
 
 std::vector<TestParameter> test_cases = {
     TestParameter{"echo test program",
-          "test program\n",
-          ""},
-    TestParameter{"echo arg1\necho arg1",
-                  "arg1\narg1\n",
+                  "test program\n",
+                  ""},
+    TestParameter{"echo \"many words argument\"\necho arg1",
+                  "many words argument\narg1\n",
                   ""},
 };
 

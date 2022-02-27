@@ -8,12 +8,12 @@
 
 namespace shell {
 
-class Shell {
+class Shell : public Command {
 public:
-    Shell(const std::shared_ptr<IStreams>& streams) : streams_(streams) {}
+    Shell(const std::string& name, const std::string& description = "") : Command(name, description) {}
 
-    void start();
-
+    void execute(const Arguments& args, State& state, IStreams& stream) override;
+    ~Shell() override = default;
 private:
     enum class ShellStatus {
         IDLE, RUNNING, FINISHED
@@ -23,7 +23,6 @@ private:
     bool is_running() const {return status_ == ShellStatus::RUNNING; }
 
 private:
-    std::shared_ptr<IStreams> streams_;
     ShellStatus status_{ShellStatus::IDLE};
 };
 
