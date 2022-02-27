@@ -31,12 +31,12 @@ jobs:
 
     - name: Build
       run: |
-        "${GITHUB_WORKSPACE}/bin/bazel" build --repo_env=CC=clang //src:shell
+        "${GITHUB_WORKSPACE}/bin/bazel" build --repo_env=CC=clang //shell:shell
 
     - name: Run unit tests
       run: |
-        CC=clang CXX=clang++ "${GITHUB_WORKSPACE}/bin/bazel" test //src/tests:unit_tests --test_output=all
+        CC=clang CXX=clang++ "${GITHUB_WORKSPACE}/bin/bazel" test //shell/tests:unit_tests --test_output=all
 
     - name: Run integration tests
       run: |
-        CC=clang CXX=clang++ "${GITHUB_WORKSPACE}/bin/bazel" test //src/tests:integration_tests --test_output=all
+        CC=clang CXX=clang++ "${GITHUB_WORKSPACE}/bin/bazel" test //shell/tests:integration_tests --test_output=all
