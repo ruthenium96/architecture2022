@@ -6,7 +6,8 @@ fi
 
 
 if [ $1 == "build" ]; then 
-    bazel build --repo_env=CC=clang //shell:shell
+    # bazel build --repo_env=CC=clang //shell:shell
+	bazel test --repo_env=CC=clang //shell/tests/...
     if [ $? -eq 1 ]; then
         exit 1
     fi
