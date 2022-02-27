@@ -2,6 +2,20 @@
 #include "shell/src/streams.h"
 #include "shell/src/exception.h"
 
+#include <fstream>
+
 void shell::CatCommand::execute(const Arguments& args, State& state, IStreams& stream) {
-    throw ShellException("cat command isn't implemented");
+    for (auto filename : args) {
+        std::fstream filestream(filename);
+
+        if (!filestream.is_open()) {
+            stream.get_err_stream() << "Failed to open " << filename << std::endl;
+            continue;
+        }
+
+        for (std::string line; std::getline(filestream, line);) {
+            stream.get_out_stream() << line << std::endl;
+        }
+    }
+    return;
 }
