@@ -7,6 +7,7 @@
 #include "shell/src/commands/cat_command.h"
 #include "shell/src/commands/pwd_command.h"
 #include "shell/src/commands/wc_command.h"
+#include "shell/src/commands/system_command.h"
 
 
 namespace shell {
@@ -24,7 +25,9 @@ bool CommandManager::command_exist(const std::string &name) const {
 std::shared_ptr<Command> CommandManager::get_command(const std::string &name) const {
     auto it = commands_.find(name);
     if (commands_.find(name) == commands_.end()) {
-        throw ShellException("command " + name + " wasn't registered");
+        auto ptr = std::make_shared<SystemCommand>(SystemCommand(name, ""));
+        return ptr;
+//        throw ShellException("command " + name + " wasn't registered");
     }
     return it->second;
 }

@@ -21,6 +21,10 @@ public:
 
     virtual ~Command() = default;
 
+    std::string get_name() const {
+        return name_;
+    }
+
 private:
     std::string name_;
     std::string description_;
