@@ -1,9 +1,14 @@
 #include "shell/src/shell.h"
 #include "shell/src/utils/substitute.h"
 
+#include <filesystem>
+
+
 namespace shell {
 
     std::optional<int> Shell::execute(const Arguments& args, State& state, IStreams& streams) {
+
+    state.get_env().set_var("PWD", std::filesystem::current_path());
 
     status_ = ShellStatus::RUNNING;
     while (is_running()) {

@@ -3,5 +3,6 @@
 #include "shell/src/exception.h"
 
 std::optional<int> shell::PwdCommand::execute(const Arguments& args, State& state, IStreams& stream) {
-    throw ShellException("pwd command isn't implemented");
+    stream.get_out_stream() << state.get_env().get_var("PWD") << std::endl;
+    return 0;
 }
