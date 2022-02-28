@@ -24,6 +24,14 @@ public:
 
         return {};
     }
+
+    std::unordered_map<std::string, std::string>::const_iterator begin() const {
+        return vars_.begin();
+    };
+    std::unordered_map<std::string, std::string>::const_iterator end() const {
+        return vars_.end();
+    };
+
 private:
     std::unordered_map<std::string, std::string> vars_;
 };

@@ -3,9 +3,11 @@
 #include "shell/src/exception.h"
 #include "shell/src/commands/command.h"
 #include "shell/src/commands/echo_command.h"
+#include "shell/src/commands/exit_command.h"
 #include "shell/src/commands/cat_command.h"
 #include "shell/src/commands/pwd_command.h"
 #include "shell/src/commands/wc_command.h"
+#include "shell/src/commands/system_command.h"
 
 
 namespace shell {
@@ -23,7 +25,9 @@ bool CommandManager::command_exist(const std::string &name) const {
 std::shared_ptr<Command> CommandManager::get_command(const std::string &name) const {
     auto it = commands_.find(name);
     if (commands_.find(name) == commands_.end()) {
-        throw ShellException("command " + name + " wasn't registered");
+        auto ptr = std::make_shared<SystemCommand>(SystemCommand(name, ""));
+        return ptr;
+//        throw ShellException("command " + name + " wasn't registered");
     }
     return it->second;
 }
@@ -35,6 +39,7 @@ void CommandManager::initialize_builtin_commands() {
     }
 
     register_command<EchoCommand>("echo");
+    register_command<ExitCommand>("exit");
     register_command<CatCommand>("cat");
     register_command<WcCommand>("wc");
     register_command<PwdCommand>("pwd");
@@ -42,8 +47,8 @@ void CommandManager::initialize_builtin_commands() {
     initialized = true;
 }
 
-void CommandBinding::call() {
-    command_->execute(args_, state_, streams_);
+std::optional<int> CommandBinding::call() {
+    return command_->execute(args_, state_, streams_);
 }
 
 std::shared_ptr<Command> CommandBinding::get_command() const {

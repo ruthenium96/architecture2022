@@ -4,5 +4,11 @@ cc_library(
     name = "shell",
     srcs = glob(["src/**/*.cpp"]),
     hdrs = glob(["src/**/*.h"]),
-    visibility = ["//visibility:public"]
+    visibility = ["//visibility:public"],
+)
+
+cc_binary(
+    name = "main",
+    srcs = ["main.cpp"],
+    deps = ["shell"],
 )

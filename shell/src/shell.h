@@ -12,7 +12,7 @@ class Shell : public Command {
 public:
     Shell(const std::string& name, const std::string& description = "") : Command(name, description) {}
 
-    void execute(const Arguments& args, State& state, IStreams& stream) override;
+    std::optional<int> execute(const Arguments& args, State& state, IStreams& stream) override;
     ~Shell() override = default;
 private:
     enum class ShellStatus {
