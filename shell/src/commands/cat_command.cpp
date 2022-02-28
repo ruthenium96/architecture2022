@@ -4,7 +4,7 @@
 
 #include <fstream>
 
-void shell::CatCommand::execute(const Arguments& args, State& state, IStreams& stream) {
+std::optional<int> shell::CatCommand::execute(const Arguments& args, State& state, IStreams& stream) {
     for (auto filename : args) {
         std::fstream filestream(filename);
 
@@ -17,5 +17,5 @@ void shell::CatCommand::execute(const Arguments& args, State& state, IStreams& s
             stream.get_out_stream() << line << std::endl;
         }
     }
-    return;
+    return 0;
 }

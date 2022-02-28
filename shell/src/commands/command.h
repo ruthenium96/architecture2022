@@ -7,6 +7,7 @@
 #include <unordered_map>
 #include <vector>
 #include <memory>
+#include <optional>
 
 namespace shell {
 
@@ -16,7 +17,7 @@ class Command {
 public:
     Command(const std::string& name, const std::string& description = "") : name_(name), description_(description) {}
 
-    virtual void execute(const Arguments& args, State& state, IStreams& stream) = 0;
+    virtual std::optional<int> execute(const Arguments& args, State& state, IStreams& stream) = 0;
 
     virtual ~Command() = default;
 
@@ -80,7 +81,7 @@ class CommandBinding {
 public:
     CommandBinding(std::shared_ptr<Command> command, const Arguments& arguments, State& state, IStreams& streams)
     : args_(arguments), command_(command), state_(state), streams_(streams) {}
-    void call();
+    std::optional<int> call();
     std::shared_ptr<Command> get_command() const;
     Arguments get_arguments() const;
 private:
