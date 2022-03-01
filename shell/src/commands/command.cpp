@@ -2,6 +2,7 @@
 
 #include "shell/src/exception.h"
 #include "shell/src/commands/command.h"
+#include "shell/src/commands/assign_command.h"
 #include "shell/src/commands/echo_command.h"
 #include "shell/src/commands/exit_command.h"
 #include "shell/src/commands/cat_command.h"
@@ -25,9 +26,13 @@ bool CommandManager::command_exist(const std::string &name) const {
 std::shared_ptr<Command> CommandManager::get_command(const std::string &name) const {
     auto it = commands_.find(name);
     if (commands_.find(name) == commands_.end()) {
+        // REDO: move it to another place?
+        if (std::count(name.cbegin(), name.cend(), '=') != 0) {
+            auto ptr = std::make_shared<AssignCommand>(AssignCommand(name, ""));
+            return ptr;
+        }
         auto ptr = std::make_shared<SystemCommand>(SystemCommand(name, ""));
         return ptr;
-//        throw ShellException("command " + name + " wasn't registered");
     }
     return it->second;
 }
