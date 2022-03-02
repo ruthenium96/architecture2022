@@ -24,6 +24,7 @@ namespace shell {
 
         auto tokens = cmd_parser.parse_tokens();
         while (!tokens.empty()) {
+            streams_local.exchange_in_and_out();
             auto cmd_binding = shell::utils::construct_command_binding(tokens, state, streams_local);
             if (cmd_binding.call() == std::nullopt) {
                 this->stop();
