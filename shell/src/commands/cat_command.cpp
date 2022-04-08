@@ -5,7 +5,7 @@
 #include <fstream>
 
 std::optional<int> shell::CatCommand::execute(const Arguments& args, State& state, IStreams& stream) {
-    for (auto filename : args) {
+    for (const auto& filename : args) {
         std::fstream filestream(filename);
 
         if (!filestream.is_open()) {
