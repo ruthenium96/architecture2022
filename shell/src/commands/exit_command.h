@@ -1,5 +1,4 @@
-#ifndef ARCHITECTURE_EXIT_H
-#define ARCHITECTURE_EXIT_H
+#pragma once
 
 #include <utility>
 
@@ -15,6 +14,3 @@ namespace shell {
     };
 
 }
-
-
-#endif //ARCHITECTURE_EXIT_H

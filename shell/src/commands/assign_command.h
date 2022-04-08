@@ -1,6 +1,4 @@
-#ifndef ARCHITECTURE_ASSIGN_COMMAND_H
-#define ARCHITECTURE_ASSIGN_COMMAND_H
-
+#pragma once
 
 #include <utility>
 
@@ -16,5 +14,3 @@ namespace shell {
     };
 
 }
-
-#endif //ARCHITECTURE_ASSIGN_COMMAND_H
