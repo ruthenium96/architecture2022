@@ -35,6 +35,19 @@ std::vector<TestParameter> test_cases = {
     TestParameter{"echo \"many words argument\"\necho arg1",
                   "many words argument\narg1\n",
                   ""},
+    TestParameter{"echo 123asd | cat",
+                  "123asd\n",
+                  ""},
+    TestParameter{"echo 123asd | cat | cat | cat | cat",
+                  "123asd\n",
+                  ""},
+    TestParameter{"/bin/echo 123asd | /bin/cat | cat | /bin/cat | cat",
+                  "123asd\n",
+                  ""},
+    TestParameter{"echo",
+                  "\n",
+                  ""},
+
 };
 
 INSTANTIATE_TEST_SUITE_P(
