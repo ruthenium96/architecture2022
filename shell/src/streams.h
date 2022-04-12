@@ -27,7 +27,7 @@ public:
 
     void exchange_in_and_out() {
         is_.swap(os_);
-        os_.clear();
+        std::stringstream().swap(os_);
     }
 
     std::istream& get_in_stream() override {return is_; }
