@@ -29,6 +29,9 @@ TEST_P(ShellExecutorIntegrationTestsFixture, CommandExecution) {
 
 
 std::vector<TestParameter> test_cases = {
+    TestParameter{"exit",
+                  "",
+                  ""},
     TestParameter{"echo test program",
                   "test program\n",
                   ""},
@@ -47,7 +50,12 @@ std::vector<TestParameter> test_cases = {
     TestParameter{"echo",
                   "\n",
                   ""},
-
+    TestParameter{"a=ex\nb=it\n$a$b",
+                  "",
+                  ""},
+    TestParameter{"a=ec\nb=ho\n$a$b 123asd",
+                  "123asd\n",
+                  ""},
 };
 
 INSTANTIATE_TEST_SUITE_P(
