@@ -14,6 +14,7 @@
 
 namespace shell::parser {
 
+// Token is "atomic" part of input.
 class IToken {
 public:
     explicit IToken(std::string value) : value_(std::move(value)) {}
@@ -49,13 +50,18 @@ struct CommandDescriptor {
     std::vector<Argument> arguments;
 };
 
-
+// Converts input line into IToken vectors.
+// At first, it lazy splits line with pipes.
+// At second, it splits line with spaces.
 class Parser {
 public:
     explicit Parser(std::string line) : line_(std::move(line)), line_view_(line_) {}
 
+    // Returns next ITokens until new pipe or line end.
     std::vector<std::shared_ptr<IToken>> parse_tokens();
 
+    // It is public only for tests. ¯\_(ツ)_/¯
+    // But it splits line onto Itokens.
     std::shared_ptr<IToken> get_next_token();
 private:
     bool is_pipe(const std::string& token) const;
