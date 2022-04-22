@@ -17,10 +17,13 @@ class Command {
 public:
     Command(const std::string& name, const std::string& description = "") : name_(name), description_(description) {}
 
+    // Execute the command. Exit commands returns nullopt,
+    // our command returns 0, external program returns their exit code.
     virtual std::optional<int> execute(const Arguments& args, State& state, IStreams& stream) = 0;
 
     virtual ~Command() = default;
 
+    // Returns name of command.
     const std::string& get_name() const {
         return name_;
     }
