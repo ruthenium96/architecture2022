@@ -17,7 +17,7 @@ namespace shell::parser {
 class IToken {
 public:
     explicit IToken(std::string value) : value_(std::move(value)) {}
-    std::string GetValue() const {
+    const std::string& GetValue() const {
         return value_;
     }
     void SetValue(const std::string& value) {
