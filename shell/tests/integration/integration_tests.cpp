@@ -35,6 +35,9 @@ std::vector<TestParameter> test_cases = {
     TestParameter{"echo test program",
                   "test program\n",
                   ""},
+    TestParameter{"ech'o' t'es't pr'o'g'r'am",
+                  "test program\n",
+                  ""},
     TestParameter{"echo \"many words argument\"\necho arg1",
                   "many words argument\narg1\n",
                   ""},
@@ -56,6 +59,15 @@ std::vector<TestParameter> test_cases = {
     TestParameter{"a=ec\nb=ho\n$a$b 123asd",
                   "123asd\n",
                   ""},
+    TestParameter{"'",
+                "",
+                "INCORRECT INPUT\n"},
+    TestParameter{"a=not_a\ncommand=\"echo $a\"\n$command",
+                  "not_a\n",
+                  ""},
+//    TestParameter{"a=not_a\ncommand='echo $a'\n$command",
+//                "$a\n",
+//                ""},
 };
 
 INSTANTIATE_TEST_SUITE_P(

@@ -36,13 +36,6 @@ public:
     ~StringToken() override = default;
 };
 
-class RawStringToken : public IToken {
-public:
-    RawStringToken(std::string value) : IToken(std::move(value)) {}
-    ~RawStringToken() override = default;
-};
-
-
 using Argument = std::string;
 
 struct CommandDescriptor {
@@ -58,15 +51,16 @@ public:
     explicit Parser(std::string line) : line_(std::move(line)), line_view_(line_) {}
 
     // Returns next ITokens until new pipe or line end.
-    std::vector<std::shared_ptr<IToken>> parse_tokens();
+    std::optional<std::vector<std::shared_ptr<IToken>>> parse_tokens();
 
     // It is public only for tests. ¯\_(ツ)_/¯
     // But it splits line onto Itokens.
-    std::shared_ptr<IToken> get_next_token();
+    std::optional<std::shared_ptr<IToken>> get_next_token();
 private:
     bool is_pipe(const std::string& token) const;
     std::string line_;
     std::string_view line_view_;
+    size_t current_position_ = 0;
 };
 
 

@@ -23,14 +23,22 @@ namespace shell {
         StreamsBuffered streams_local;
 
         auto tokens = cmd_parser.parse_tokens();
-        while (!tokens.empty()) {
+        if (!tokens.has_value()) {
+            streams.get_err_stream() << "INCORRECT INPUT" << std::endl;
+            continue;
+        }
+        while (!tokens.value().empty()) {
             streams_local.exchange_in_and_out();
-            auto cmd_binding = shell::utils::construct_command_binding(tokens, state, streams_local);
+            auto cmd_binding = shell::utils::construct_command_binding(tokens.value(), state, streams_local);
             if (cmd_binding.call() == std::nullopt) {
                 this->stop();
                 return 0;
             }
             tokens = cmd_parser.parse_tokens();
+            if (!tokens.has_value()) {
+                streams.get_err_stream() << "INCORRECT INPUT" << std::endl;
+                continue;
+            }
         }
         streams.get_out_stream() << streams_local.get_out_buffer();
         streams.get_err_stream() << streams_local.get_err_buffer();
