@@ -25,13 +25,15 @@ std::optional<int> shell::SystemCommand::execute(const Arguments& args, State& s
     }
     in_stream.close();
 
-    // cat in.txt | COMMAND [ARGS] > out.txt
+    // cat in.txt | 'COMMAND' ['ARGS'] > out.txt
     std::string external_command_string = "cat " + temp_in.string() + " | ";
-    external_command_string += this->get_name();
+    external_command_string += "'" + this->get_name() + "'";
     for (const auto& arg : args) {
-        external_command_string += ' ' + arg;
+        external_command_string += " '" + arg + "'";
     }
     external_command_string += "> " + temp_out.string();
+
+    std::cout << external_command_string << std::endl;
 
     int exit_code = system(external_command_string.c_str());
 
