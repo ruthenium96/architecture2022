@@ -7,6 +7,9 @@ std::optional<int> shell::EchoCommand::execute(const Arguments& args, State& sta
     for (; index + 1 < args.size(); ++index) {
         out_stream << args[index] << " ";
     }
-    out_stream << args[index] << std::endl;
+    if (args.size() != 0) {
+        out_stream << args[index];
+    }
+    out_stream << std::endl;
     return 0;
 }

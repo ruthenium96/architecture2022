@@ -14,10 +14,11 @@
 
 namespace shell::parser {
 
+// Token is "atomic" part of input.
 class IToken {
 public:
     explicit IToken(std::string value) : value_(std::move(value)) {}
-    std::string GetValue() const {
+    const std::string& GetValue() const {
         return value_;
     }
     void SetValue(const std::string& value) {
@@ -35,13 +36,6 @@ public:
     ~StringToken() override = default;
 };
 
-class RawStringToken : public IToken {
-public:
-    RawStringToken(std::string value) : IToken(std::move(value)) {}
-    ~RawStringToken() override = default;
-};
-
-
 using Argument = std::string;
 
 struct CommandDescriptor {
@@ -49,18 +43,24 @@ struct CommandDescriptor {
     std::vector<Argument> arguments;
 };
 
-
+// Converts input line into IToken vectors.
+// At first, it lazy splits line with pipes.
+// At second, it splits line with spaces.
 class Parser {
 public:
     explicit Parser(std::string line) : line_(std::move(line)), line_view_(line_) {}
 
-    std::vector<std::shared_ptr<IToken>> parse_tokens();
+    // Returns next ITokens until new pipe or line end.
+    std::optional<std::vector<std::shared_ptr<IToken>>> parse_tokens();
 
-    std::shared_ptr<IToken> get_next_token();
+    // It is public only for tests. ¯\_(ツ)_/¯
+    // But it splits line onto Itokens.
+    std::optional<std::shared_ptr<IToken>> get_next_token();
 private:
     bool is_pipe(const std::string& token) const;
     std::string line_;
     std::string_view line_view_;
+    size_t current_position_ = 0;
 };
 
 

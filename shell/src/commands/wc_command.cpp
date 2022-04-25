@@ -5,6 +5,14 @@
 #include <fstream>
 
 std::optional<int> shell::WcCommand::execute(const Arguments& args, State& state, IStreams& stream) {
+    if (args.size() == 0) {
+        return execute_for_stdin(args, state, stream);
+    } else {
+        return execute_for_files(args, state, stream);
+    }
+}
+
+std::optional<int> shell::WcCommand::execute_for_files(const Arguments& args, State& state, IStreams& stream) {
 
     unsigned long long total_lines = 0;
     unsigned long long total_words = 0;
@@ -38,5 +46,22 @@ std::optional<int> shell::WcCommand::execute(const Arguments& args, State& state
         stream.get_out_stream() << total_lines << " " << total_words << " "
         << total_chars << " total" << std::endl;
     }
+    return 0;
+}
+
+std::optional<int> shell::WcCommand::execute_for_stdin(const Arguments& args, State& state, IStreams& stream) {
+
+    unsigned long long local_lines = 0;
+    unsigned long long local_words = 0;
+    unsigned long long local_chars = 0;
+
+    for (std::string line; std::getline(stream.get_in_stream(), line);) {
+        local_lines++;
+        local_words += std::count(line.cbegin(), line.cend(), ' ') + 1;
+        local_chars += line.size() + 1;
+    }
+
+    stream.get_out_stream() << local_lines << " " << local_words << " "
+    << local_chars << std::endl;
     return 0;
 }

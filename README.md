@@ -12,3 +12,13 @@ chmod +x shell.sh
 ```
 ./shell.sh run
 ```
+
+## Build tests
+```
+chmod +x shell.sh
+./shell.sh build_tests
+```
+## Run tests
+```
+./shell.sh run_tests
+```

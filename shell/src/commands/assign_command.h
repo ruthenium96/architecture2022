@@ -6,9 +6,9 @@
 
 namespace shell {
 
-    class ExitCommand : public Command {
+    class AssignCommand : public Command {
     public:
-        ExitCommand(const std::string& name, const std::string& description) : Command(name, description) {}
+        AssignCommand(const std::string& name, const std::string& description) : Command(name, description) {}
 
         std::optional<int> execute(const Arguments& args, State& state, IStreams& stream) override;
     };

@@ -5,7 +5,7 @@ def _impl(ctx):
     tool_paths = [
         tool_path(
             name = "gcc",
-            path = "/usr/bin/clang++",
+            path = "/usr/bin/g++",
         ),
         tool_path(
             name = "ld",

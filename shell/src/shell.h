@@ -8,6 +8,7 @@
 
 namespace shell {
 
+// Looper-class, very special type of Command. It is child of Command for subshell functionality.
 class Shell : public Command {
 public:
     Shell(const std::string& name, const std::string& description = "") : Command(name, description) {}

@@ -13,29 +13,42 @@ bool is_valid_identifier_symbol(char c) {
 std::string substitute_single_token(const std::string& token_value, const State& state) {
     std::string_view token_view{token_value};
     std::string result;
+
+    bool isSingleQuoteOpen = false;
     size_t index = 0;
     while (index < token_value.size()) {
+        if (token_value[index] == '\'') {
+            isSingleQuoteOpen = !isSingleQuoteOpen;
+            ++index;
+            continue;
+        }
+        if (token_value[index] == '"') {
+            ++index;
+            continue;
+        }
+
         if (token_value[index] != '$') {
             result += token_view[index++];
             continue;
         }
-        const size_t index_identifier_start = ++index;
-        while (is_valid_identifier_symbol(token_view[index]) && index < token_view.size()) {
-            ++index;
-        }
-        auto identifier = token_view.substr(index_identifier_start, index - index_identifier_start);
+        if (token_value[index] == '$' && isSingleQuoteOpen) {
+            result += token_view[index++];
+            continue;
+        } else {
+            const size_t index_identifier_start = ++index;
+            while (is_valid_identifier_symbol(token_view[index]) && index < token_view.size()) {
+                ++index;
+            }
+            auto identifier = token_view.substr(index_identifier_start, index - index_identifier_start);
 
-        result += state.get_env().get_var(std::string{identifier});
+            result += state.get_env().get_var(std::string{identifier});
+        }
     }
     return result;
 }
 
 void substitute_tokens(std::vector<std::shared_ptr<parser::IToken>>& tokens, const State& state) {
     for (auto& token : tokens) {
-        if (std::dynamic_pointer_cast<parser::RawStringToken>(token)) {
-            continue;
-        }
-
         std::string token_value = token->GetValue();
         if (token_value.empty()) {
             throw ParsingError();
