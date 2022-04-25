@@ -13,6 +13,10 @@ namespace shell {
     status_ = ShellStatus::RUNNING;
     while (is_running()) {
         std::string cmd_line;
+        // print invitation only if streams is global streams:
+        if (dynamic_cast<StreamsGlobal*>(&streams)) {
+            streams.get_out_stream() << state.get_env().get_var("PWD") << "$ ";
+        }
         std::getline(streams.get_in_stream(), cmd_line);
         if (cmd_line.empty()) {
             this->stop();

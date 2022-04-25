@@ -8,6 +8,7 @@
 
 std::optional<int> shell::SystemCommand::execute(const Arguments& args, State& state, IStreams& stream) {
 
+    // copy our environment to external shell
     for (const auto& [key, value] : state.get_env()) {
         setenv(key.c_str(), value.c_str(), 1);
     }
@@ -25,6 +26,7 @@ std::optional<int> shell::SystemCommand::execute(const Arguments& args, State& s
     }
     in_stream.close();
 
+    // TODO: save stderr too
     // cat in.txt | 'COMMAND' ['ARGS'] > out.txt
     std::string external_command_string = "cat " + temp_in.string() + " | ";
     external_command_string += "'" + this->get_name() + "'";
@@ -33,8 +35,7 @@ std::optional<int> shell::SystemCommand::execute(const Arguments& args, State& s
     }
     external_command_string += "> " + temp_out.string();
 
-    std::cout << external_command_string << std::endl;
-
+    // execute external command
     int exit_code = system(external_command_string.c_str());
 
     // write file to get_out_stream
@@ -43,7 +44,9 @@ std::optional<int> shell::SystemCommand::execute(const Arguments& args, State& s
         stream.get_out_stream() << line << std::endl;
     }
     out_stream.close();
+    // TODO: copy external shell environment to ours
 
+    // delete temporary files
     std::filesystem::remove(temp_in.string());
     std::filesystem::remove(temp_out.string());
 
